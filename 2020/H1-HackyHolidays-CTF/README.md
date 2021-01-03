@@ -308,7 +308,18 @@ And finally got the flag :
 
 We have the description of the challenge :  
 > Just how evil are you? Take the quiz and see! Just don't go poking around the admin area !
-  
+ 
+The home page looks like this :
+
+![cf_array](./images/9-home.png)
+
+The first step is to register on the site, then we are asked to complete a quiz and finally we get our evil score.  
+On the score page, we have an important information for the resolution of the challenge, it is the number of other players with the same name as our user.  
+
+For our first participation, we get : ```There is 1 other player(s) with the same name as you!```  
+
+
+ 
 
 ## Day 10 - Signup Manager
 
@@ -428,6 +439,7 @@ Once the attack is launched, we are directly blocked because we are not allowed 
 ![cf_array](./images/12-attack-blocked.png)
 
 My idea was good and I decide to continue attacking the localhost by trying different bypasses.  
+First of all, I try to launch an attack on **192.168.1.1.zip.io** to see the workflow of the attack on a host :   
 
 ![cf_array](./images/12-second-attack.png)
 
@@ -455,7 +467,11 @@ And finally I am redirected to ```https://hackyholidays.h1ctf.com/attack-box/cha
 
 ![cf_array](./images/flag12.png)  
 
+**Final FLAG : flag{ba6586b0-e482-41e6-9a68-caf9941b48a0}**
 
+
+#### References
+- https://github.com/ffuf/ffuf ;D 
 
 
 
