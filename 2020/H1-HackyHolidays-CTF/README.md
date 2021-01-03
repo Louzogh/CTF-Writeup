@@ -57,7 +57,7 @@ All encoded in base64, we get access to **The Grinch** user information details 
 ![cf_array](./images/flag3.png)  
 
 
-FLAG 3 : flag{b705fb11-fb55-442f-847f-0931be82ed9a}
+**FLAG 3 : flag{b705fb11-fb55-442f-847f-0931be82ed9a}**  
 
 ## Day 4 - Swag shop
 On this app, main goal is : 
@@ -187,7 +187,7 @@ john --wordlist=/usr/share/wordlists/SecLists/Passwords/Leaked-Databases/rockyou
 
 Password : **hahahaha**
 
-Inside flag.txt => FLAG : flag{2e6f9bf8-fdbd-483b-8c18-bdf371b2b004}
+Inside flag.txt => **FLAG : flag{2e6f9bf8-fdbd-483b-8c18-bdf371b2b004}**  
 
 ## Day 6 - My Diary
 
@@ -309,6 +309,155 @@ And finally got the flag :
 We have the description of the challenge :  
 > Just how evil are you? Take the quiz and see! Just don't go poking around the admin area !
   
+
+## Day 10 - Signup Manager
+
+Description of the challenge :  
+> You've made it this far! The grinch is recruiting for his army to ruin the holidays but they're very picky on who they let in !  
+
+The first page looks like this : 
+
+![cf_array](./images/10-login-register.png)
+
+Looking at the source code, we can see that there is a README.me file exposed.  
+
+```
+# SignUp Manager
+SignUp manager is a simple and easy to use script which allows new users to signup and login to a private page. All users are stored in a file so need for a complicated database setup.
+
+### How to Install
+1) Create a directory that you wish SignUp Manager to be installed into
+2) Move signupmanager.zip into the new directory and unzip it.
+3) For security move users.txt into a directory that cannot be read from website visitors
+4) Update index.php with the location of your users.txt file
+5) Edit the user and admin php files to display your hidden content
+6) You can make anyone an admin by changing the last character in the users.txt file to a Y
+7) Default login is admin / password
+```
+
+You can then retrieve the source code on the following link :  ```https://hackyholidays.h1ctf.com/signup-manager/signupmanager.zip```  
+Several files are present : 
+
+```
+- admin.php
+- index.php
+- signup.php
+- user.php
+```
+
+By analyzing the files, we quickly realize that the most interesting thing happens in the file **index.php** because all the processing is done here.  
+A users.txt file is generated with the following format : 
+```(username(15) password(md5=>32) random-hash(md5=>32) age(3) firstname(15) lastname(15) N(admin:Y/N:1)=> 113```
+
+To verify that a user has the administrator role, the ```'admin' => ((substr($user_str, 112, 1) === 'Y') ? true : false)``` function is performed by testing if the 112th character is equal to 'Y'.
+I realize that if I want to become a user with the role of administrator, I must succeed in changing this last character. (the 112th character)  
+
+All fields are correctly filtered with functions **substr** and **preg_replace** with the exception of the field **age** which is filtered by the function **is_numeric**.  
+The **is_numeric** function is vulnerable to many bypasses :  https://github.com/w181496/Web-CTF-Cheatsheet#is_numeric  
+
+By using the following parameters, I am then able to create a user with the administrator role : 
+
+```action=signup&username=louzoghzzz67890&password=louzoghzzz12345&age=1e6&firstname=louzoghzzz1234&lastname=louzoghzzz1Y34```
+
+The fact is : ```1e6 = 1000000```, which shifts the characters in the string of the file **users.txt** and thanks to my lastname parameter, I am able to replace the **N** by **Y**.  
+
+Now, by logging in with the previously created user, we have administrator access :  
+
+![cf_array](./images/10-flag.png)
+
+And we obtain the link for the next challenge ```/r3c0n_server_4fdk59``` in the source code.    
+
+**FLAG : flag{99309f0f-1752-44a5-af1e-a03e4150757d}**
+
+## Day 11 - Grinch Recon
+
+
+## Day 12 - Grinch Network Attack Server
+
+After finishing the challenge of day 11, we get access to the Attack Console ```https://hackyholidays.h1ctf.com/attack-box``` !  
+
+![cf_array](./images/12-home.png)
+
+Each attack button corresponds to an IP to be attacked and has the following payload :  
+
+```
+203.0.113.33
+/attack-box/launch?payload=eyJ0YXJnZXQiOiIyMDMuMC4xMTMuMzMiLCJoYXNoIjoiNWYyOTQwZDY1Y2E0MTQwY2MxOGQwODc4YmMzOTg5NTUifQ==
+Decoded : {"target":"203.0.113.33","hash":"5f2940d65ca4140cc18d0878bc398955"}
+
+203.0.113.53
+/attack-box/launch?payload=eyJ0YXJnZXQiOiIyMDMuMC4xMTMuNTMiLCJoYXNoIjoiMjgxNGY5YzczMTFhODJmMWI4MjI1ODUwMzlmNjI2MDcifQ==
+Decoded : {"target":"203.0.113.53","hash":"2814f9c7311a82f1b822585039f62607"}
+
+203.0.113.213
+/attack-box/launch?payload=eyJ0YXJnZXQiOiIyMDMuMC4xMTMuMjEzIiwiaGFzaCI6IjVhYTliNWE0OTdlMzkxOGMwZTE5MDBiMmEyMjI4YzM4In0=
+Decoded : {"target":"203.0.113.213","hash":"5aa9b5a497e3918c0e1900b2a2228c38"}
+```
+
+Thanks to the hint of Hackerone, we know that hash is salted : 
+
+![cf_array](./images/12-hint.png)
+
+I am then able to recover the salt that had been added to the hash, hash.txt looks like : 
+```
+2814f9c7311a82f1b822585039f62607:203.0.113.53
+5aa9b5a497e3918c0e1900b2a2228c38:203.0.113.213
+```
+
+By using hashcat command, i'm able to retrieve the salt : 
+
+```hashcat -m 10 -a 0  hash.txt /usr/share/wordlists/SecLists/Passwords/Leaked-Databases/rockyou.txt```  
+Salt : ```mrgrinch463```  
+
+I decide to launch a first attack on the ip **203.0.113.33** in order to see the workflow of the attack : 
+
+![cf_array](./images/12-first-attack.png)
+
+
+The first idea that came to me is to attack the localhost (127.0.0.1).  
+So I generated a hash corresponding to ```127.0.0.1``` with the salt ```mrgrinch463``` and I encoded the payload in base64 : 
+
+```
+echo '{"target":"127.0.0.1","hash":"3e3f8df1658372edf0214e202acb460b"}' | base64 
+
+eyJ0YXJnZXQiOiIxMjcuMC4wLjEiLCJoYXNoIjoiM2UzZjhkZjE2NTgzNzJlZGYwMjE0ZTIwMmFjYjQ2MGIifQo=  
+```  
+
+Once the attack is launched, we are directly blocked because we are not allowed to attack the localhost.  
+
+![cf_array](./images/12-attack-blocked.png)
+
+My idea was good and I decide to continue attacking the localhost by trying different bypasses.  
+
+![cf_array](./images/12-second-attack.png)
+
+We can see that the attack takes place in several stages :
+- First, Getting Host Information  
+- Then, a resolution of the host  
+- If the host does not resolve on the localhost, then the attack is launched on the host as well as its first resolution.  
+- Finally, a **ping** command is launched to check if the target is still up or not.  
+
+Everything seems to be blocked when I try to launch an attack on the localhost, my last card in hand is DNS Rebinding but I don't know how to implement it without having my own domain.  
+I do a lot of research and I come across the ```https://lock.cmpxchg8b.com/rebinder.html``` tool, which is absolutely great, I would like to thank the creator !   
+
+The tool is very easy to use :  
+
+![cf_array](./images/12-rebinder.png)
+  
+I am then able to set up two DNS records, the first one pointing to **192.168.0.1** and the second one pointing to **127.0.0.1**.  
+I repeat the process of sending my payload and I generate a new payload with the domain **c0a80001.7f000001.rbndr.us**. 
+
+I launch the attack with my new payload : 
+
+![cf_array](./images/12-attack-success.png)
+
+And finally I am redirected to ```https://hackyholidays.h1ctf.com/attack-box/challenge-completed-a3c589ba2709```.  
+
+![cf_array](./images/flag12.png)  
+
+
+
+
 
 
 
