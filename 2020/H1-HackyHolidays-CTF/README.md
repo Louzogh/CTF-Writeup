@@ -413,6 +413,55 @@ And we obtain the link for the next challenge ```/r3c0n_server_4fdk59``` in the 
 
 ## Day 11 - Grinch Recon
 
+We are coming to ```https://hackyholidays.h1ctf.com/r3c0n_server_4fdk59``` and  this is where the fun (evil?) starts !  
+
+![cf_array](./images/11-home.png) 
+
+On the right side, we can see an "Attack Box" button, which leads us to a login interface, we will once again have to retrieve an account.  
+
+Then we have 3 albums :   
+- **Xmas 2020**
+```
+/r3c0n_server_4fdk59/album?hash=jdh34k
+```
+
+- **Xmas 2019**
+```
+/r3c0n_server_4fdk59/album?hash=59grop
+```
+
+- **Xmas 2018**
+```
+/r3c0n_server_4fdk59/album?hash=3dir42
+```
+
+In each album we have several photos, for example, on the ```/r3c0n_server_4fdk59/album?hash=jdh34k``` : 
+
+```
+src="/r3c0n_server_4fdk59/picture?data=eyJpbWFnZSI6InIzYzBuX3NlcnZlcl80ZmRrNTlcL3VwbG9hZHNcL2RiNTA3YmRiMTg2ZDMzYTcxOWViMDQ1NjAzMDIwY2VjLmpwZyIsImF1dGgiOiJiYmYyOTVkNjg2YmQyYWYzNDZmY2Q4MGM1Mzk4ZGU5YSJ9">
+Decoded : {"image":"r3c0n_server_4fdk59\/uploads\/db507bdb186d33a719eb045603020cec.jpg","auth":"bbf295d686bd2af346fcd80c5398de9a"}
+
+src="/r3c0n_server_4fdk59/picture?data=eyJpbWFnZSI6InIzYzBuX3NlcnZlcl80ZmRrNTlcL3VwbG9hZHNcLzliODgxYWY4YjMyZmYwN2Y2ZGFhZGE5NWZmNzBkYzNhLmpwZyIsImF1dGgiOiJlOTM0ZjQ0MDdhOWRmOWZkMjcyY2RiOWMzOTdmNjczZiJ9">
+Decoded : {"image":"r3c0n_server_4fdk59\/uploads\/9b881af8b32ff07f6daada95ff70dc3a.jpg","auth":"e934f4407a9df9fd272cdb9c397f673f"}
+
+src="/r3c0n_server_4fdk59/picture?data=eyJpbWFnZSI6InIzYzBuX3NlcnZlcl80ZmRrNTlcL3VwbG9hZHNcLzEzZDc0NTU0YzMwZTEwNjk3MTRhNWE5ZWRkYThjOTRkLmpwZyIsImF1dGgiOiI5NGZiMzk4ZDc4YjM2ZTdjMDc5ZTc1NjBjZTlkZjcyMSJ9">
+Decoded : {"image":"r3c0n_server_4fdk59\/uploads\/13d74554c30e1069714a5a9edda8c94d.jpg","auth":"94fb398d78b36e7c079e7560ce9df721"}
+```
+
+Quickly I discover a SQL injection in the parameter ```/r3c0n_server_4fdk59/album?hash=jdh34k' AND 2158=2158```.  
+Thanks to SqlMap, I quickly discover the architecture of the database, but no interesting data, but the most important in this injection is the architecture of the **album** table which will be useful for the future !  
+
+After being stuck for a while, I understood the hint given by Hackerone : 
+
+![cf_array](./images/inception.mp4)
+
+
+
+
+
+
+
+
 
 ## Day 12 - Grinch Network Attack Server
 
