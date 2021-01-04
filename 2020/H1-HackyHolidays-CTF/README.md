@@ -453,8 +453,14 @@ Thanks to SqlMap, I quickly discover the architecture of the database, but no in
 
 After being stuck for a while, I understood the hint given by Hackerone : 
 
-<video src="./images/inception.mp4" width="320" height="200" controls preload></video>
 
+<!-- blank line -->
+<figure class="video_container">
+  <video controls="true" allowfullscreen="true" poster="path/to/poster_image.png">
+    <source src="./images/inception.mp4" type="video/mp4">
+  </video>
+</figure>
+<!-- blank line -->
 
 
 
