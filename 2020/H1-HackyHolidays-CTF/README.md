@@ -6,7 +6,7 @@ With the arrival of the Christmas holydays, Hackerone hosted a CTF with a main t
 
 ### Summary :
 
-TODO image with draw.io
+![cf_array](./images/ctf.png)
 
 ## Day 1
 The CTF begins with a tweet :  
