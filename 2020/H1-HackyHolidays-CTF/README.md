@@ -6,7 +6,7 @@ With the arrival of the Christmas holydays, Hackerone hosted a CTF with a main t
 
 ### Summary :
 
-![cf_array](./images/ctf.png)
+<img src="./images/ctf.png" height="50%" width="50%">
 
 ## Day 1
 The CTF begins with a tweet :  
