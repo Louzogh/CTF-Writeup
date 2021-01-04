@@ -453,7 +453,8 @@ Thanks to SqlMap, I quickly discover the architecture of the database, but no in
 
 After being stuck for a while, I understood the hint given by Hackerone : 
 
-![cf_array](./images/inception.mp4)
+<video src="./images/inception.mp4" width="320" height="200" controls preload></video>
+
 
 
 
